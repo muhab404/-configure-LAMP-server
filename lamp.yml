@@ -1,0 +1,87 @@
+---
+- name: Install and configure LAMP stack
+  hosts: webservers
+  become: true
+
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Install MySQL
+      apt:
+        name: mysql-server
+        state: present
+
+
+    - name: Install PHP
+      apt:
+        name: php
+        state: present
+
+    - name: Install PHP-apache
+      apt:
+        name: libapache2-mod-php
+        state: present
+
+    - name: Install PHP-mysql
+      apt:
+        name: php-mysql
+        state: present
+
+    - name: Enable Apache mod_rewrite
+      apache2_module:
+        name: rewrite
+        state: present
+
+    - name: Copy PHP info file
+      copy:
+        src: info.php
+        dest: /var/www/html/info.php
+        owner: www-data
+        group: www-data
+        mode: 0644
+
+    # - name: install MySQL Client
+    #   apt:
+    #     name: mysql-client
+    #     state: present
+
+    - name: Install pip
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install PyMySQL
+      pip:
+        name: pymysql
+        state: present
+
+    - name: Create MySQL database
+      mysql_db:
+        name: mydatabase
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create MySQL user
+      mysql_user:
+        name: myuser
+        password: mypassword
+        priv: "mydatabase.*:ALL"
+        host: localhost
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        state: present
+
+    - name: Ensure Apache is running and enabled
+      service:
+        name: apache2
+        state: started
+        enabled: yes
